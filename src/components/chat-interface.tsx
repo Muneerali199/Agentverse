@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react';
-import { ChatMessage } from '@/lib/types';
+import { ChatMessage, Agent } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -15,8 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 interface ChatInterfaceProps {
-  agentName: string;
-  agentAvatar: string;
+  agent: Agent;
 }
 
 function fileToDataUri(file: File): Promise<string> {
@@ -28,9 +27,9 @@ function fileToDataUri(file: File): Promise<string> {
     });
 }
 
-export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
+export function ChatInterface({ agent }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', role: 'agent', content: `Hello! I am ${agentName}. How can I assist you today?` },
+    { id: '1', role: 'agent', content: `Hello! I am ${agent.name}. How can I assist you today?` },
   ]);
   const [input, setInput] = useState('');
   const [image, setImage] = useState<File | null>(null);
@@ -89,17 +88,22 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
     removeImage();
 
     try {
-        const storedKeys = localStorage.getItem('apiKeys');
-        const apiKeys = storedKeys ? JSON.parse(storedKeys) : [];
-        const geminiKey = apiKeys.find((k: any) => k.provider === 'gemini');
+        let apiKeyToUse = agent.apiKey;
 
-        if (!geminiKey?.keyRaw) {
+        if (!apiKeyToUse) {
+            const storedKeys = localStorage.getItem('apiKeys');
+            const apiKeys = storedKeys ? JSON.parse(storedKeys) : [];
+            const geminiKey = apiKeys.find((k: any) => k.provider === 'gemini');
+            apiKeyToUse = geminiKey?.keyRaw;
+        }
+
+        if (!apiKeyToUse) {
           toast({
             variant: "destructive",
             title: "Gemini API Key Not Found",
             description: (
               <p>
-                Please add your Gemini API key on the{' '}
+                Please add an API key for this agent in the builder or add a general key on the{' '}
                 <Link href="/keys" className="underline">
                   API Keys page
                 </Link>
@@ -107,7 +111,7 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
               </p>
             ),
           });
-          setMessages(prev => prev.slice(0, -1)); // Remove the user message
+          setMessages(prev => prev.slice(0, -1));
           setIsLoading(false);
           return;
         }
@@ -120,7 +124,7 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
         const result = await processMultiModalInput({
             text: input,
             imageDataUri,
-            apiKey: geminiKey.keyRaw,
+            apiKey: apiKeyToUse,
         });
 
         const agentResponse: ChatMessage = {
@@ -157,8 +161,8 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
             >
               {message.role === 'agent' && (
                 <Avatar className="h-9 w-9 border">
-                  <AvatarImage src={agentAvatar} alt={agentName} />
-                  <AvatarFallback>{agentName.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={agent.avatar} alt={agent.name} />
+                  <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
                 </Avatar>
               )}
               <div className={cn('max-w-lg space-y-2', message.role === 'user' && 'items-end flex flex-col')}>
@@ -204,8 +208,8 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
           {isLoading && (
               <div className="flex items-start gap-4">
                   <Avatar className="h-9 w-9 border">
-                      <AvatarImage src={agentAvatar} alt={agentName} />
-                      <AvatarFallback>{agentName.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={agent.avatar} alt={agent.name} />
+                      <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="max-w-lg space-y-2">
                       <div className="rounded-lg p-3 w-fit bg-muted">
@@ -230,7 +234,7 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Chat with ${agentName}...`}
+              placeholder={`Chat with ${agent.name}...`}
               className="pr-24 min-h-[48px] resize-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {

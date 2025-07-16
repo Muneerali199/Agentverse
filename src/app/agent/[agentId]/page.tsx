@@ -65,7 +65,7 @@ export default function AgentPage() {
             </p>
         </div>
       </div>
-      <ChatInterface agentName={agent.name} agentAvatar={agent.avatar} />
+      <ChatInterface agent={agent} />
     </div>
   );
 }

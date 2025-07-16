@@ -11,6 +11,9 @@ export type Agent = {
     response_time: number;
   };
   isDeployed: boolean;
+  provider?: string;
+  apiKey?: string;
+  systemPrompt?: string;
 };
 
 export type Tool = {

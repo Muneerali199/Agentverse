@@ -40,7 +40,9 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
       if (agentToEdit) {
         setName(agentToEdit.name);
         setDescription(agentToEdit.description);
-        // For simplicity, we're not saving/loading system prompts, providers, or keys yet.
+        setSystemPrompt(agentToEdit.systemPrompt || '');
+        setProvider(agentToEdit.provider || 'gemini');
+        setApiKey(agentToEdit.apiKey || '');
       }
     }
   }, [agentId, isEditing]);
@@ -56,11 +58,14 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
     }
 
     const newAgent: Agent = {
-        id: isEditing ? agentId : `agent-${Date.now()}`,
+        id: isEditing ? agentId! : `agent-${Date.now()}`,
         name,
         description,
-        avatar: 'https://placehold.co/128x128.png', // Default avatar for now
-        tools: [], // Default tools for now
+        systemPrompt,
+        provider,
+        apiKey,
+        avatar: 'https://placehold.co/128x128.png',
+        tools: [],
         performance: { accuracy: 0, response_time: 0 },
         isDeployed: false,
     };
@@ -73,11 +78,8 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
         if (agentIndex > -1) {
             customAgents[agentIndex] = newAgent;
         } else {
-            // This handles editing a default agent, saving it as a custom one.
             const defaultAgentIndex = defaultAgents.findIndex(a => a.id === agentId);
             if (defaultAgentIndex > -1) {
-                // To prevent overwriting default agents, we create a new custom agent.
-                // For a real app, you'd have a more sophisticated update logic.
                 newAgent.id = `agent-${Date.now()}`;
                 customAgents.push(newAgent);
             }
@@ -185,9 +187,9 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="api-key">API Key</Label>
-                            <Input id="api-key" type="password" placeholder="Using key from API Keys page" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+                            <Input id="api-key" type="password" placeholder="Enter your API key" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
                              <p className="text-xs text-muted-foreground">
-                                Keys are managed on the{' '}
+                                Alternatively, manage keys on the{' '}
                                 <Link href="/keys" className="text-primary underline">
                                     API Keys page.
                                 </Link>
