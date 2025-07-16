@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react';
@@ -5,14 +6,25 @@ import { ChatMessage } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
-import { Paperclip, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
+import { Paperclip, Send, ThumbsDown, ThumbsUp, X, Loader } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Textarea } from './ui/textarea';
+import { processMultiModalInput } from '@/ai/flows/process-multi-modal-input';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatInterfaceProps {
   agentName: string;
   agentAvatar: string;
+}
+
+function fileToDataUri(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
@@ -22,8 +34,10 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -56,9 +70,11 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
     // Here you would call the analyzeAgentFeedback AI flow
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!input.trim() && !image) return;
+
+    setIsLoading(true);
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -71,17 +87,40 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
     setInput('');
     removeImage();
 
-    // Simulate agent response
-    setTimeout(() => {
-      const agentResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'agent',
-        content: `This is a simulated response based on your input: "${input}".`,
-      };
-      setMessages((prev) => [...prev, agentResponse]);
-    }, 1000);
+    try {
+        const storedKeys = localStorage.getItem('apiKeys');
+        const apiKeys = storedKeys ? JSON.parse(storedKeys) : [];
+        const geminiKey = apiKeys.find((k: any) => k.provider.toLowerCase() === 'gemini');
 
-    // Here you would call the processMultiModalInput AI flow
+        let imageDataUri: string | undefined;
+        if (image) {
+            imageDataUri = await fileToDataUri(image);
+        }
+
+        const result = await processMultiModalInput({
+            text: input,
+            imageDataUri,
+            apiKey: geminiKey?.keyRaw,
+        });
+
+        const agentResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'agent',
+            content: result.response,
+        };
+        setMessages((prev) => [...prev, agentResponse]);
+
+    } catch(error: any) {
+        console.error("Error processing request:", error);
+        toast({
+            variant: "destructive",
+            title: "An error occurred",
+            description: error.message || "Please try again later.",
+        });
+        setMessages(prev => prev.slice(0, -1)); // Remove the user message on error
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -142,6 +181,19 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
               )}
             </div>
           ))}
+          {isLoading && (
+              <div className="flex items-start gap-4">
+                  <Avatar className="h-9 w-9 border">
+                      <AvatarImage src={agentAvatar} alt={agentName} />
+                      <AvatarFallback>{agentName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="max-w-lg space-y-2">
+                      <div className="rounded-lg p-3 w-fit bg-muted">
+                           <Loader className="h-5 w-5 animate-spin" />
+                      </div>
+                  </div>
+              </div>
+          )}
         </div>
         <div className="border-t p-4 bg-background">
           <form onSubmit={handleSubmit} className="relative">
@@ -166,12 +218,13 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
                     handleSubmit(e);
                 }
               }}
+              disabled={isLoading}
             />
             <div className="absolute top-1/2 -translate-y-1/2 right-3 flex gap-1">
-                <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
+                <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
                     <Paperclip className="h-5 w-5" />
                 </Button>
-                <Button type="submit" size="icon">
+                <Button type="submit" size="icon" disabled={isLoading}>
                     <Send className="h-5 w-5" />
                 </Button>
             </div>

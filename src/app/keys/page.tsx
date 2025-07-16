@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ type ApiKey = {
   id: string;
   provider: string;
   key: string;
+  keyRaw: string; // Store the raw key
   createdAt: string;
 };
 
@@ -37,7 +39,8 @@ export default function ApiKeysPage() {
     const newKey: ApiKey = {
       id: `key-${Date.now()}`,
       provider,
-      key: `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 4)}`, // Mask the key
+      key: `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 4)}`, // Mask the key for display
+      keyRaw: apiKey, // Store the actual key
       createdAt: new Date().toISOString().split('T')[0],
     };
 
@@ -78,7 +81,7 @@ export default function ApiKeysPage() {
             <DialogHeader>
               <DialogTitle>Add New API Key</DialogTitle>
               <DialogDescription>
-                Select a provider and add your API key. It will be stored securely in your browser.
+                Select a provider and add your API key. It will be stored securely in your browser's local storage.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
