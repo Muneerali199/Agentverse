@@ -103,9 +103,9 @@ export default function ApiKeysPage() {
                         <SelectValue placeholder="Select a provider" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Gemini">Gemini</SelectItem>
-                        <SelectItem value="OpenAI">OpenAI</SelectItem>
-                        <SelectItem value="Claude">Claude</SelectItem>
+                        <SelectItem value="gemini">Gemini</SelectItem>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="claude">Claude</SelectItem>
                     </SelectContent>
                 </Select>
               </div>
@@ -140,7 +140,7 @@ export default function ApiKeysPage() {
               {apiKeys.length > 0 ? (
                 apiKeys.map((key) => (
                   <TableRow key={key.id}>
-                    <TableCell className="font-medium">{key.provider}</TableCell>
+                    <TableCell className="font-medium capitalize">{key.provider}</TableCell>
                     <TableCell className="font-mono">{key.key}</TableCell>
                     <TableCell>{key.createdAt}</TableCell>
                     <TableCell className="text-right">

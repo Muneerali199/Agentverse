@@ -91,7 +91,7 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
     try {
         const storedKeys = localStorage.getItem('apiKeys');
         const apiKeys = storedKeys ? JSON.parse(storedKeys) : [];
-        const geminiKey = apiKeys.find((k: any) => k.provider === 'Gemini');
+        const geminiKey = apiKeys.find((k: any) => k.provider === 'gemini');
 
         if (!geminiKey?.keyRaw) {
           toast({
