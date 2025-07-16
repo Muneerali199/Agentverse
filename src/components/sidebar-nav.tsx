@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, LayoutGrid, PlusCircle } from 'lucide-react';
+import { Bot, KeyRound, LayoutGrid, PlusCircle } from 'lucide-react';
 
 import {
   Sidebar,
@@ -18,7 +18,10 @@ import { Button } from './ui/button';
 export function SidebarNav() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path || (path === '/builder' && pathname.startsWith('/builder'));
+  const isActive = (path: string) => {
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
+  }
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -33,8 +36,9 @@ export function SidebarNav() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/" asChild>
+            <Link href="/" passHref>
               <SidebarMenuButton
+                as="a"
                 isActive={isActive('/')}
                 tooltip="Dashboard"
               >
@@ -44,13 +48,26 @@ export function SidebarNav() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/builder" asChild>
+            <Link href="/builder" passHref>
               <SidebarMenuButton
+                as="a"
                 isActive={isActive('/builder')}
                 tooltip="Create Agent"
               >
                 <PlusCircle />
                 <span>Create Agent</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <Link href="/keys" passHref>
+              <SidebarMenuButton
+                as="a"
+                isActive={isActive('/keys')}
+                tooltip="API Keys"
+              >
+                <KeyRound />
+                <span>API Keys</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

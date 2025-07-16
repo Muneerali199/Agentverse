@@ -2,10 +2,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { tools } from '@/lib/data';
-import { Bot, Cpu, GripVertical, Save, Settings, Wand2, Wrench } from 'lucide-react';
+import { Bot, Cpu, GripVertical, KeyRound, Save, Settings, Wand2, Wrench } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AgentBuilderPage({ params }: { params: { agentId?: string[] } }) {
   const isEditing = params.agentId && params.agentId.length > 0;
@@ -82,7 +84,32 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
                     <CardTitle className="text-lg">Configuration</CardTitle>
                     <CardDescription>Define your agent's identity and parameters.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                    <div className="space-y-4 p-4 rounded-lg border bg-blue-500/5 border-blue-500/20">
+                        <div className="space-y-2">
+                            <Label htmlFor="api-provider">AI Provider</Label>
+                            <Select defaultValue="gemini">
+                                <SelectTrigger id="api-provider">
+                                    <SelectValue placeholder="Select a provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="gemini">Gemini</SelectItem>
+                                    <SelectItem value="openai">OpenAI</SelectItem>
+                                    <SelectItem value="claude">Claude</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="api-key">API Key</Label>
+                            <Input id="api-key" type="password" placeholder="Enter your API key" />
+                             <p className="text-xs text-muted-foreground">
+                                Your API keys are stored securely. Need to manage them?{' '}
+                                <Link href="/keys" className="text-primary underline">
+                                    Go to API Keys.
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="agent-name">Agent Name</Label>
                         <Input id="agent-name" placeholder="e.g., Customer Support Bot" />
