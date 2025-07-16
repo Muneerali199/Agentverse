@@ -36,9 +36,8 @@ export function SidebarNav() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/" passHref>
+            <Link href="/">
               <SidebarMenuButton
-                as="a"
                 isActive={isActive('/')}
                 tooltip="Dashboard"
               >
@@ -48,9 +47,8 @@ export function SidebarNav() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/builder" passHref>
+            <Link href="/builder">
               <SidebarMenuButton
-                as="a"
                 isActive={isActive('/builder')}
                 tooltip="Create Agent"
               >
@@ -60,9 +58,8 @@ export function SidebarNav() {
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/keys" passHref>
+            <Link href="/keys">
               <SidebarMenuButton
-                as="a"
                 isActive={isActive('/keys')}
                 tooltip="API Keys"
               >
