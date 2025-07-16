@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Agent, ChatMessage } from '@/lib/types';
+import { ChatMessage } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -11,12 +11,13 @@ import Image from 'next/image';
 import { Textarea } from './ui/textarea';
 
 interface ChatInterfaceProps {
-  agent: Agent;
+  agentName: string;
+  agentAvatar: string;
 }
 
-export function ChatInterface({ agent }: ChatInterfaceProps) {
+export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', role: 'agent', content: `Hello! I am ${agent.name}. How can I assist you today?` },
+    { id: '1', role: 'agent', content: `Hello! I am ${agentName}. How can I assist you today?` },
   ]);
   const [input, setInput] = useState('');
   const [image, setImage] = useState<File | null>(null);
@@ -97,8 +98,8 @@ export function ChatInterface({ agent }: ChatInterfaceProps) {
             >
               {message.role === 'agent' && (
                 <Avatar className="h-9 w-9 border">
-                  <AvatarImage src={agent.avatar} alt={agent.name} />
-                  <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={agentAvatar} alt={agentName} />
+                  <AvatarFallback>{agentName.charAt(0)}</AvatarFallback>
                 </Avatar>
               )}
               <div className={cn('max-w-lg space-y-2', message.role === 'user' && 'items-end flex flex-col')}>
@@ -157,7 +158,7 @@ export function ChatInterface({ agent }: ChatInterfaceProps) {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Chat with ${agent.name}...`}
+              placeholder={`Chat with ${agentName}...`}
               className="pr-24 min-h-[48px] resize-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
