@@ -33,26 +33,28 @@ export function SidebarNav() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/" legacyBehavior passHref>
-              <SidebarMenuButton
-                isActive={isActive('/')}
-                tooltip="Dashboard"
-              >
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/')}
+              tooltip="Dashboard"
+            >
+              <Link href="/">
                 <LayoutGrid />
                 <span>Dashboard</span>
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/builder" legacyBehavior passHref>
-              <SidebarMenuButton
-                isActive={isActive('/builder')}
-                tooltip="Create Agent"
-              >
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/builder')}
+              tooltip="Create Agent"
+            >
+              <Link href="/builder">
                 <PlusCircle />
                 <span>Create Agent</span>
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
