@@ -18,7 +18,7 @@ import { Button } from './ui/button';
 export function SidebarNav() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname === path || (path === '/builder' && pathname.startsWith('/builder'));
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -33,28 +33,28 @@ export function SidebarNav() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isActive('/')}
-              tooltip="Dashboard"
-            >
-              <Link href="/">
+            <Link href="/" passHref legacyBehavior>
+              <SidebarMenuButton
+                as="a"
+                isActive={isActive('/')}
+                tooltip="Dashboard"
+              >
                 <LayoutGrid />
                 <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isActive('/builder')}
-              tooltip="Create Agent"
-            >
-              <Link href="/builder">
+            <Link href="/builder" passHref legacyBehavior>
+              <SidebarMenuButton
+                as="a"
+                isActive={isActive('/builder')}
+                tooltip="Create Agent"
+              >
                 <PlusCircle />
                 <span>Create Agent</span>
-              </Link>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
