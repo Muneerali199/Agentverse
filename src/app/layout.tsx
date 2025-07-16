@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { Header } from '@/components/header';
 import { Toaster } from '@/components/ui/toaster';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'AgentVerse',
@@ -15,6 +16,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const layout = cookies().get('sidebar_state');
+  const defaultOpen = layout ? layout.value === 'true' : true;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -26,7 +30,7 @@ export default function RootLayout({
         ></link>
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={defaultOpen}>
           <SidebarNav />
           <SidebarInset>
             <div className="flex flex-col min-h-screen">

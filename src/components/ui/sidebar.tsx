@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
+import { getCookie } from "cookies-next"
 import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -58,7 +59,7 @@ const SidebarProvider = React.forwardRef<
 >(
   (
     {
-      defaultOpen = true,
+      defaultOpen,
       open: openProp,
       onOpenChange: setOpenProp,
       className,
@@ -75,10 +76,22 @@ const SidebarProvider = React.forwardRef<
     React.useEffect(() => {
         setIsMounted(true)
     }, [])
+    
+    // Read initial state from cookie
+    const initialOpen = React.useMemo(() => {
+      if (typeof window === 'undefined') {
+        const cookie = getCookie(SIDEBAR_COOKIE_NAME);
+        if (cookie === 'true') return true;
+        if (cookie === 'false') return false;
+        return defaultOpen ?? true;
+      }
+      return defaultOpen ?? true;
+    }, [defaultOpen]);
+
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen)
+    const [_open, _setOpen] = React.useState(initialOpen)
     const open = openProp ?? _open
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -94,6 +107,15 @@ const SidebarProvider = React.forwardRef<
       },
       [setOpenProp, open]
     )
+    
+    React.useEffect(() => {
+        const cookie = getCookie(SIDEBAR_COOKIE_NAME);
+        if (cookie === 'true') {
+            _setOpen(true);
+        } else if (cookie === 'false') {
+            _setOpen(false);
+        }
+    }, [])
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
@@ -199,17 +221,48 @@ const Sidebar = React.forwardRef<
           </div>
         )
       }
-      return (
-         <div
-          ref={ref}
-          className="group peer hidden md:block text-sidebar-foreground"
-          data-state={'collapsed'}
-          data-collapsible={collapsible}
-          data-variant={variant}
-          data-side={side}
-        >
-        </div>
-      );
+       return (
+          <div
+            ref={ref}
+            className="group peer hidden md:block text-sidebar-foreground"
+            data-state={state}
+            data-collapsible={state === "collapsed" ? collapsible : ""}
+            data-variant={variant}
+            data-side={side}
+          >
+             <div
+              className={cn(
+                "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
+                "group-data-[collapsible=offcanvas]:w-0",
+                "group-data-[side=right]:rotate-180",
+                variant === "floating" || variant === "inset"
+                  ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
+                  : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+              )}
+            />
+            <div
+              className={cn(
+                "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
+                side === "left"
+                  ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+                  : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+                // Adjust the padding for floating and inset variants.
+                variant === "floating" || variant === "inset"
+                  ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
+                  : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+                className
+              )}
+              {...props}
+            >
+              <div
+                data-sidebar="sidebar"
+                className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+              >
+                {children}
+              </div>
+            </div>
+          </div>
+        );
     }
     
     if (collapsible === "none") {
