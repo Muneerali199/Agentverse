@@ -1,30 +1,63 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
-// Mock data for API keys
-const apiKeys = [
-  {
-    id: 'key-1',
-    provider: 'Gemini',
-    key: 'gmn_...xyz',
-    createdAt: '2024-07-29',
-  },
-  {
-    id: 'key-2',
-    provider: 'OpenAI',
-    key: 'sk-...abc',
-    createdAt: '2024-07-28',
-  }
-];
+type ApiKey = {
+  id: string;
+  provider: string;
+  key: string;
+  createdAt: string;
+};
 
 export default function ApiKeysPage() {
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [provider, setProvider] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const storedKeys = localStorage.getItem('apiKeys');
+    if (storedKeys) {
+      setApiKeys(JSON.parse(storedKeys));
+    }
+  }, []);
+
+  const handleSaveKey = () => {
+    if (!provider || !apiKey) return;
+
+    const newKey: ApiKey = {
+      id: `key-${Date.now()}`,
+      provider,
+      key: `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 4)}`, // Mask the key
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+
+    const updatedKeys = [...apiKeys, newKey];
+    setApiKeys(updatedKeys);
+    localStorage.setItem('apiKeys', JSON.stringify(updatedKeys));
+    
+    // Reset form and close dialog
+    setProvider('');
+    setApiKey('');
+    setIsDialogOpen(false);
+  };
+  
+  const handleDeleteKey = (id: string) => {
+    const updatedKeys = apiKeys.filter(key => key.id !== id);
+    setApiKeys(updatedKeys);
+    localStorage.setItem('apiKeys', JSON.stringify(updatedKeys));
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -34,7 +67,7 @@ export default function ApiKeysPage() {
             Manage your API keys for different AI providers.
           </p>
         </div>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle />
@@ -45,7 +78,7 @@ export default function ApiKeysPage() {
             <DialogHeader>
               <DialogTitle>Add New API Key</DialogTitle>
               <DialogDescription>
-                Select a provider and add your API key. It will be stored securely.
+                Select a provider and add your API key. It will be stored securely in your browser.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -53,14 +86,14 @@ export default function ApiKeysPage() {
                 <Label htmlFor="provider" className="text-right">
                   Provider
                 </Label>
-                <Select>
+                <Select value={provider} onValueChange={setProvider}>
                     <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Select a provider" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="gemini">Gemini</SelectItem>
-                        <SelectItem value="openai">OpenAI</SelectItem>
-                        <SelectItem value="claude">Claude</SelectItem>
+                        <SelectItem value="Gemini">Gemini</SelectItem>
+                        <SelectItem value="OpenAI">OpenAI</SelectItem>
+                        <SelectItem value="Claude">Claude</SelectItem>
                     </SelectContent>
                 </Select>
               </div>
@@ -68,11 +101,14 @@ export default function ApiKeysPage() {
                 <Label htmlFor="key" className="text-right">
                   API Key
                 </Label>
-                <Input id="key" placeholder="Enter your API key" className="col-span-3" />
+                <Input id="key" placeholder="Enter your API key" className="col-span-3" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Save key</Button>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleSaveKey}>Save key</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -89,28 +125,36 @@ export default function ApiKeysPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {apiKeys.map((key) => (
-                <TableRow key={key.id}>
-                  <TableCell className="font-medium">{key.provider}</TableCell>
-                  <TableCell className="font-mono">{key.key}</TableCell>
-                  <TableCell>{key.createdAt}</TableCell>
-                  <TableCell className="text-right">
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className='h-8 w-8 shrink-0'>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Delete</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+              {apiKeys.length > 0 ? (
+                apiKeys.map((key) => (
+                  <TableRow key={key.id}>
+                    <TableCell className="font-medium">{key.provider}</TableCell>
+                    <TableCell className="font-mono">{key.key}</TableCell>
+                    <TableCell>{key.createdAt}</TableCell>
+                    <TableCell className="text-right">
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className='h-8 w-8 shrink-0'>
+                                  <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={() => handleDeleteKey(key.id)}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span>Delete</span>
+                              </DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No API keys added yet.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
