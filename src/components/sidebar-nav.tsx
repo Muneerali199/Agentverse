@@ -33,9 +33,8 @@ export function SidebarNav() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/" passHref legacyBehavior>
+            <Link href="/" asChild>
               <SidebarMenuButton
-                as="a"
                 isActive={isActive('/')}
                 tooltip="Dashboard"
               >
@@ -45,9 +44,8 @@ export function SidebarNav() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/builder" passHref legacyBehavior>
+            <Link href="/builder" asChild>
               <SidebarMenuButton
-                as="a"
                 isActive={isActive('/builder')}
                 tooltip="Create Agent"
               >
