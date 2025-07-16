@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -25,6 +26,7 @@ export default function ApiKeysPage() {
   const [provider, setProvider] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const storedKeys = localStorage.getItem('apiKeys');
@@ -34,7 +36,14 @@ export default function ApiKeysPage() {
   }, []);
 
   const handleSaveKey = () => {
-    if (!provider || !apiKey) return;
+    if (!provider || !apiKey) {
+        toast({
+            variant: "destructive",
+            title: "Missing Information",
+            description: "Please select a provider and enter an API key.",
+        });
+        return;
+    }
 
     const newKey: ApiKey = {
       id: `key-${Date.now()}`,
@@ -111,7 +120,7 @@ export default function ApiKeysPage() {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleSaveKey}>Save key</Button>
+              <Button onClick={handleSaveKey} disabled={!provider || !apiKey}>Save key</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

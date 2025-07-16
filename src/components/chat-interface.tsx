@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { Textarea } from './ui/textarea';
 import { processMultiModalInput } from '@/ai/flows/process-multi-modal-input';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 interface ChatInterfaceProps {
   agentName: string;
@@ -92,6 +93,25 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
         const apiKeys = storedKeys ? JSON.parse(storedKeys) : [];
         const geminiKey = apiKeys.find((k: any) => k.provider === 'Gemini');
 
+        if (!geminiKey?.keyRaw) {
+          toast({
+            variant: "destructive",
+            title: "Gemini API Key Not Found",
+            description: (
+              <p>
+                Please add your Gemini API key on the{' '}
+                <Link href="/keys" className="underline">
+                  API Keys page
+                </Link>
+                .
+              </p>
+            ),
+          });
+          setMessages(prev => prev.slice(0, -1)); // Remove the user message
+          setIsLoading(false);
+          return;
+        }
+
         let imageDataUri: string | undefined;
         if (image) {
             imageDataUri = await fileToDataUri(image);
@@ -100,7 +120,7 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
         const result = await processMultiModalInput({
             text: input,
             imageDataUri,
-            apiKey: geminiKey?.keyRaw,
+            apiKey: geminiKey.keyRaw,
         });
 
         const agentResponse: ChatMessage = {
@@ -224,7 +244,7 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
                 <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
                     <Paperclip className="h-5 w-5" />
                 </Button>
-                <Button type="submit" size="icon" disabled={isLoading}>
+                <Button type="submit" size="icon" disabled={isLoading || (!input.trim() && !image)}>
                     <Send className="h-5 w-5" />
                 </Button>
             </div>
