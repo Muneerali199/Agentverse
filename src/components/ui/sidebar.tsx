@@ -34,6 +34,7 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
   toggleSidebar: () => void
+  isMounted: boolean
 }
 
 const SidebarContext = React.createContext<SidebarContext | null>(null)
@@ -69,6 +70,11 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
+    const [isMounted, setIsMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -125,8 +131,9 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        isMounted
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, isMounted]
     )
 
     return (
@@ -175,8 +182,36 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, isMounted } = useSidebar()
 
+    if (!isMounted) {
+      if (collapsible === 'none') {
+         return (
+          <div
+            className={cn(
+              "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
+              className
+            )}
+            ref={ref}
+            {...props}
+          >
+            {children}
+          </div>
+        )
+      }
+      return (
+         <div
+          ref={ref}
+          className="group peer hidden md:block text-sidebar-foreground"
+          data-state={'collapsed'}
+          data-collapsible={collapsible}
+          data-variant={variant}
+          data-side={side}
+        >
+        </div>
+      );
+    }
+    
     if (collapsible === "none") {
       return (
         <div
@@ -761,5 +796,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
-    
