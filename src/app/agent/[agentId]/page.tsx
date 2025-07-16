@@ -3,7 +3,7 @@
 
 import { ChatInterface } from '@/components/chat-interface';
 import { agents as defaultAgents } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,19 +11,22 @@ import { useEffect, useState } from 'react';
 import { Agent } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function AgentPage({ params }: { params: { agentId: string } }) {
-  const { agentId } = params;
+export default function AgentPage() {
+  const params = useParams();
+  const agentId = params.agentId as string;
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedAgents = localStorage.getItem('customAgents');
-    const customAgents = storedAgents ? JSON.parse(storedAgents) : [];
-    const allAgents = [...defaultAgents, ...customAgents];
-    const foundAgent = allAgents.find((a) => a.id === agentId);
-    
-    if (foundAgent) {
-      setAgent(foundAgent);
+    if (agentId) {
+        const storedAgents = localStorage.getItem('customAgents');
+        const customAgents = storedAgents ? JSON.parse(storedAgents) : [];
+        const allAgents = [...defaultAgents, ...customAgents];
+        const foundAgent = allAgents.find((a) => a.id === agentId);
+        
+        if (foundAgent) {
+          setAgent(foundAgent);
+        }
     }
     setLoading(false);
   }, [agentId]);
