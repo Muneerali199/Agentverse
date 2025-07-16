@@ -1,3 +1,6 @@
+
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -5,12 +8,93 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { tools } from '@/lib/data';
+import { agents as defaultAgents, tools } from '@/lib/data';
+import { Agent } from '@/lib/types';
 import { Bot, Cpu, GripVertical, KeyRound, Save, Settings, Wand2, Wrench } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AgentBuilderPage({ params }: { params: { agentId?: string[] } }) {
-  const isEditing = params.agentId && params.agentId.length > 0;
+  const router = useRouter();
+  const { toast } = useToast();
+  const agentId = params.agentId?.[0];
+  const isEditing = !!agentId;
+
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [provider, setProvider] = useState('gemini');
+  const [apiKey, setApiKey] = useState('');
+  const [allAgents, setAllAgents] = useState<Agent[]>([]);
+
+  useEffect(() => {
+    const storedAgents = localStorage.getItem('customAgents');
+    const customAgents = storedAgents ? JSON.parse(storedAgents) : [];
+    const combinedAgents = [...defaultAgents, ...customAgents];
+    setAllAgents(combinedAgents);
+
+    if (isEditing) {
+      const agentToEdit = combinedAgents.find(a => a.id === agentId);
+      if (agentToEdit) {
+        setName(agentToEdit.name);
+        setDescription(agentToEdit.description);
+        // For simplicity, we're not saving/loading system prompts, providers, or keys yet.
+      }
+    }
+  }, [agentId, isEditing]);
+
+  const handleSaveAgent = () => {
+    if (!name || !description) {
+        toast({
+            variant: "destructive",
+            title: "Missing Information",
+            description: "Please provide a name and description for your agent.",
+        });
+        return;
+    }
+
+    const newAgent: Agent = {
+        id: isEditing ? agentId : `agent-${Date.now()}`,
+        name,
+        description,
+        avatar: 'https://placehold.co/128x128.png', // Default avatar for now
+        tools: [], // Default tools for now
+        performance: { accuracy: 0, response_time: 0 },
+        isDeployed: false,
+    };
+
+    const storedAgents = localStorage.getItem('customAgents');
+    let customAgents: Agent[] = storedAgents ? JSON.parse(storedAgents) : [];
+
+    if (isEditing) {
+        const agentIndex = customAgents.findIndex(a => a.id === agentId);
+        if (agentIndex > -1) {
+            customAgents[agentIndex] = newAgent;
+        } else {
+            // This handles editing a default agent, saving it as a custom one.
+            const defaultAgentIndex = defaultAgents.findIndex(a => a.id === agentId);
+            if (defaultAgentIndex > -1) {
+                // To prevent overwriting default agents, we create a new custom agent.
+                // For a real app, you'd have a more sophisticated update logic.
+                newAgent.id = `agent-${Date.now()}`;
+                customAgents.push(newAgent);
+            }
+        }
+    } else {
+        customAgents.push(newAgent);
+    }
+    
+    localStorage.setItem('customAgents', JSON.stringify(customAgents));
+
+    toast({
+        title: `Agent ${isEditing ? 'updated' : 'saved'}!`,
+        description: `${name} has been successfully saved.`,
+    });
+
+    router.push('/');
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -28,9 +112,9 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
                 <Settings />
                 Settings
             </Button>
-            <Button>
+            <Button onClick={handleSaveAgent}>
                 <Save />
-                Save Agent
+                {isEditing ? 'Save Changes' : 'Save Agent'}
             </Button>
         </div>
       </div>
@@ -88,7 +172,7 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
                     <div className="space-y-4 p-4 rounded-lg border bg-blue-500/5 border-blue-500/20">
                         <div className="space-y-2">
                             <Label htmlFor="api-provider">AI Provider</Label>
-                            <Select defaultValue="gemini">
+                            <Select value={provider} onValueChange={setProvider}>
                                 <SelectTrigger id="api-provider">
                                     <SelectValue placeholder="Select a provider" />
                                 </SelectTrigger>
@@ -101,27 +185,27 @@ export default function AgentBuilderPage({ params }: { params: { agentId?: strin
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="api-key">API Key</Label>
-                            <Input id="api-key" type="password" placeholder="Enter your API key" />
+                            <Input id="api-key" type="password" placeholder="Using key from API Keys page" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
                              <p className="text-xs text-muted-foreground">
-                                Your API keys are stored securely. Need to manage them?{' '}
+                                Keys are managed on the{' '}
                                 <Link href="/keys" className="text-primary underline">
-                                    Go to API Keys.
+                                    API Keys page.
                                 </Link>
                             </p>
                         </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="agent-name">Agent Name</Label>
-                        <Input id="agent-name" placeholder="e.g., Customer Support Bot" />
+                        <Input id="agent-name" placeholder="e.g., Customer Support Bot" value={name} onChange={e => setName(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="agent-description">Agent Description</Label>
-                        <Textarea id="agent-description" placeholder="Describe what your agent does." rows={3} />
+                        <Textarea id="agent-description" placeholder="Describe what your agent does." rows={3} value={description} onChange={e => setDescription(e.target.value)} />
                     </div>
                     <Separator />
                      <div className="space-y-2">
                         <Label>System Prompt</Label>
-                        <Textarea placeholder="You are a helpful assistant..." rows={6} />
+                        <Textarea placeholder="You are a helpful assistant..." rows={6} value={systemPrompt} onChange={e => setSystemPrompt(e.target.value)}/>
                         <p className="text-xs text-muted-foreground">This prompt sets the context and personality for your agent.</p>
                     </div>
                 </CardContent>
