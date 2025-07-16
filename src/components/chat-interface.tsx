@@ -90,7 +90,7 @@ export function ChatInterface({ agentName, agentAvatar }: ChatInterfaceProps) {
     try {
         const storedKeys = localStorage.getItem('apiKeys');
         const apiKeys = storedKeys ? JSON.parse(storedKeys) : [];
-        const geminiKey = apiKeys.find((k: any) => k.provider.toLowerCase() === 'gemini');
+        const geminiKey = apiKeys.find((k: any) => k.provider === 'Gemini');
 
         let imageDataUri: string | undefined;
         if (image) {
