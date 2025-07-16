@@ -40,6 +40,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an intelligent agent that can process both text and images to provide relevant responses.\n\nText: {{{text}}}\n\n{{#if imageDataUri}}
 Image: {{media url=imageDataUri}}
 {{/if}}\n\nResponse:`,
+  model: 'googleai/gemini-pro-vision',
 });
 
 const processMultiModalInputFlow = ai.defineFlow(
@@ -53,12 +54,11 @@ const processMultiModalInputFlow = ai.defineFlow(
       throw new Error("API key is required. Please add a Gemini API key on the 'API Keys' page.");
     }
     
-    const {output} = await ai.run('processMultiModalInputPrompt', {
+    const {output} = await prompt({
         text: input.text,
         imageDataUri: input.imageDataUri,
     }, {
         plugins: [googleAI({ apiKey: input.apiKey })],
-        model: 'googleai/gemini-2.0-flash',
     });
 
     return output!;
